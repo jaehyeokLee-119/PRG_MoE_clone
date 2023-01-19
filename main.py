@@ -5,7 +5,7 @@ import argparse
 import os
 import json, csv
 import torch.backends.cudnn
-
+import module
 
 # Reproducibility
 random_seed = 77
@@ -62,8 +62,40 @@ if args.test:
 
 
 if __name__ == '__main__':
-    train_data = './data_fold/data_0/dailydialog_train.json'
-     
+    train_data_list = ['data_fold/data_0/dailydialog_train.json']
+    valid_data_list = ['data_fold/data_0/dailydialog_valid.json']
+    test_data_list  = ['data_fold/data_0/dailydialog_test.json']
+    data_label = ['-original_data_DailyDialog']
+
+    model_name_list = ['PRG_MoE']
+    log_directory_list = ['PRG_MoE']
+    
+    train_data_list =['data_fold/data_0/dailydialog_train.json'] + [f'data_fold/data_{fold_}/data_{fold_}_train.json' for fold_ in range(1, 5)]
+    valid_data_list =['data_fold/data_0/dailydialog_valid.json'] + [f'data_fold/data_{fold_}/data_{fold_}_valid.json' for fold_ in range(1, 5)]
+    test_data_list = ['data_fold/data_0/dailydialog_test.json'] + [f'data_fold/data_{fold_}/data_{fold_}_test.json' for fold_ in range(1, 5)]
+    data_label = ['-original_data_DailyDialog'] + [f'-data_{fold_}_DailyDialog' for fold_ in range(1, 5)]
+
+    for tr, va, te, dl in zip(train_data_list, valid_data_list, test_data_list, data_label):
+        ''' 
+            tr=data_fold/data_0/dailydialog_train.json
+            va=data_fold/data_0/dailydialog_valid.json
+            te=data_fold/data_0/dailydialog_test.json
+            dl=-original_data_DailyDialog
+        '''
+        args_dict['train_data'], args_dict['valid_data'], args_dict['test_data'], args_dict['data_label'] = tr, va, te, dl
+        for mo, log_d in zip(model_name_list, log_directory_list):
+            '''
+            mo = 'PRG_MoE'
+            log_d = 'PRG_MoE
+            '''
+            args_dict['model_name'] = mo
+            args_dict['log_directory'] = log_d + dl
+            
+            trainer = module.learning_env(**args_dict)
+            trainer.run(**args_dict)
+            
+            del trainer
+    
 
 
 
