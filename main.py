@@ -62,6 +62,8 @@ if args.test:
 
 
 if __name__ == '__main__':
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    
     train_data_list = ['data_fold/data_0/dailydialog_train.json']
     valid_data_list = ['data_fold/data_0/dailydialog_valid.json']
     test_data_list  = ['data_fold/data_0/dailydialog_test.json']
@@ -70,10 +72,10 @@ if __name__ == '__main__':
     model_name_list = ['PRG_MoE']
     log_directory_list = ['PRG_MoE']
     
-    train_data_list =['data_fold/data_0/dailydialog_train.json'] + [f'data_fold/data_{fold_}/data_{fold_}_train.json' for fold_ in range(1, 5)]
-    valid_data_list =['data_fold/data_0/dailydialog_valid.json'] + [f'data_fold/data_{fold_}/data_{fold_}_valid.json' for fold_ in range(1, 5)]
-    test_data_list = ['data_fold/data_0/dailydialog_test.json'] + [f'data_fold/data_{fold_}/data_{fold_}_test.json' for fold_ in range(1, 5)]
-    data_label = ['-original_data_DailyDialog'] + [f'-data_{fold_}_DailyDialog' for fold_ in range(1, 5)]
+    # train_data_list =['data_fold/data_0/dailydialog_train.json'] + [f'data_fold/data_{fold_}/data_{fold_}_train.json' for fold_ in range(1, 5)]
+    # valid_data_list =['data_fold/data_0/dailydialog_valid.json'] + [f'data_fold/data_{fold_}/data_{fold_}_valid.json' for fold_ in range(1, 5)]
+    # test_data_list = ['data_fold/data_0/dailydialog_test.json'] + [f'data_fold/data_{fold_}/data_{fold_}_test.json' for fold_ in range(1, 5)]
+    # data_label = ['-original_data_DailyDialog'] + [f'-data_{fold_}_DailyDialog' for fold_ in range(1, 5)]
 
     for tr, va, te, dl in zip(train_data_list, valid_data_list, test_data_list, data_label):
         ''' 
