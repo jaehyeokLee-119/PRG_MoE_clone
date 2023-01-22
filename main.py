@@ -26,8 +26,8 @@ parser.add_argument('--num_worker', default=6)
 parser.add_argument('--port', default=1234)
 
 parser.add_argument('--model_name', default='DFC_MoE')
-parser.add_argument('--pretrained_model', default="./model/PRG_MoE-binary_cause--original_data_DailyDialog-2023-01-11_202517.pt") # 만들어진 모델 써서
-parser.add_argument('--test', default=True) # 테스트
+parser.add_argument('--pretrained_model', default=None) # 만들어진 모델 써서
+parser.add_argument('--test', default=False) # 테스트
 
 parser.add_argument('--split_directory', default=None)
 parser.add_argument('--train_data', default="data/dailydialog_train.json")
