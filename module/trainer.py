@@ -9,8 +9,9 @@ import logging, datetime
 import sklearn
 import torch
 
-class learning_env:
-    def __init__(self, gpus, train_data, valid_data, test_data, split_directory, max_seq_len, log_directory, model_name, port, contain_context, data_label, **kwargs) -> None:
+class trainer:
+    # init: trainer의 learning_env 세팅
+    def learning_env(self, gpus, train_data, valid_data, test_data, split_directory, max_seq_len, log_directory, model_name, port, contain_context, data_label, **kwargs) -> None:
         self.gpus = gpus # 사용할 GPU 번호들
         self.single_gpu = True if len(self.gpus) == 1 else False # gpu 개수가 1개인지 아닌지를 저장 (여러개면 multiprocessing해야 함)  
         self.train_dataset = train_data
@@ -61,8 +62,11 @@ class learning_env:
             pass
             # single_gpu가 아닌 경우를 설정 (나중에)
         
-        model = self.__set_model__(**self.options).cuda(allocated_gpu)
+        model = self.__set_model__(**self.options)
         self.model = model
+        
+        # saver = model_saver(path="model/pretrained.pt", single_gpu=self.single_gpu)
+        # saver(self.model)
     
     def init_stopper(self):
         self.stopper[0] = 0
@@ -73,7 +77,9 @@ class learning_env:
     
     def child_process(self, allocated_gpu, training_iter, batch_size, learning_rate, patience, num_worker, stopper, split_performance, test=False):
         print('allocated_gpu: ',allocated_gpu)
+        
         self.set_model(allocated_gpu)
+        self.stopper = stopper
         
         if test:
             self.valid(allocated_gpu, batch_size, num_worker, saver=None, option='test')
@@ -83,10 +89,14 @@ class learning_env:
     
     def get_dataloader(self, dataset_file, batch_size, num_worker, shuffle=True, contain_context=False):
         # dataset_file 파일명대로 데이터를 불러와서 DataLoader를 리턴함
-        (utterance_input_ids_t, utterance_attention_mask_t, utterance_token_type_ids_t), /
-        speaker_t, emotion_label_t, pair_cause_label_t, pair_binary_cause_label_t = get_data(dataset_file, f"cuda:0", self.max_seq_len, contain_context)
+        
+        # 하나의 파일에 들어있는 전체 대화를 텐서 형태로 불러온다.
+        (utterance_input_ids_t, utterance_attention_mask_t, utterance_token_type_ids_t), speaker_t, emotion_label_t, pair_cause_label_t, pair_binary_cause_label_t = get_data(dataset_file, 'cpu', self.max_seq_len, contain_context)
+        # dataset_은 대화[발화, 발화, 발화, ...] 형태의 tensor
+        # ex, dataset_[0][0][0]: 데이터셋 파일 속 '1:첫 번째 대화'의 '3:첫 번째 발화'의 '2:utterance_input_ids_t (token sequence)'
         dataset_ = TensorDataset(utterance_input_ids_t, utterance_attention_mask_t, utterance_token_type_ids_t, speaker_t, emotion_label_t, pair_cause_label_t, pair_binary_cause_label_t)
         
+        return DataLoader(dataset=dataset_, batch_size=batch_size, shuffle=shuffle)
     
     def train(self, allocated_gpu, training_iter, batch_size, learning_rate, patience, num_worker):
         def get_pad_idx(utterance_input_ids_batch):
@@ -104,7 +114,40 @@ class learning_env:
                                                 verbose=False)    
         train_dataloader = self.get_dataloader(self.train_dataset, batch_size, num_worker)
         
-    def run(self, **kwargs):
-        print(kwargs)
-        self.work(**kwargs)
+        epoch = training_iter
+        for i in range(epoch):
+            self.model.train() # 학습 모드
+            loss_avg, count=0, 0
+            emo_pred_y_list, emo_true_y_list = [list() for _ in range(2)]
+            cau_pred_y_list_all, cau_true_y_list_all, cau_pred_y_list, cau_true_y_list = [list() for _ in range(4)]
+
+            '''
+            DataLoader: 생성된 dataloader는 list 형태는 아니지만 iterable하게 작동
+            선언(__init__) 시, 인자로 dataset과 batch_size를 넣는다. shuffle 여부도 선택 가능
+            
+            iterable하게 접근 시, batch_size만큼
+            '''
+            for utterance_input_ids_batch, utterance_attention_mask_batch, utterance_token_type_ids_batch, speaker_batch, emotion_label_batch, pair_cause_label_batch, pair_binary_cause_label_batch in tqdm(train_dataloader, desc=f"Train | Epoch {i+1}"):
+                # batch_size(5)개의 대화가 담긴 tensor
+                
+                batch_size, max_doc_len, max_seq_len = utterance_input_ids_batch.shape
+                
+                prediction = self.model(utterance_input_ids_batch, utterance_attention_mask_batch, utterance_token_type_ids_batch, speaker_batch)
+                emotion_prediction, binary_cause_prediction = prediction
+                breakpoint()
         
+        
+    def run(self, **kwargs):
+        self.work(**kwargs)
+
+
+class model_saver:
+    def __init__(self, path='checkpoint.pt', single_gpu=None):
+        self.path = path
+        self.single_gpu = single_gpu
+
+    def __call__(self, model):
+        if self.single_gpu:
+            torch.save(model.state_dict(), self.path)
+        else:
+            torch.save(model.module.state_dict(), self.path)

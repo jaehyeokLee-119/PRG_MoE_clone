@@ -1,0 +1,8 @@
+# 데이터파일
+/data_fold
+
+# 모델
+/model/*
+
+# 임시파일
+/module/__pycache__

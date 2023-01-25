@@ -26,7 +26,7 @@ parser.add_argument('--num_worker', default=6)
 parser.add_argument('--port', default=1234)
 
 parser.add_argument('--model_name', default='DFC_MoE')
-parser.add_argument('--pretrained_model', default=None) # 만들어진 모델 써서
+parser.add_argument('--pretrained_model', default="model/pretrained.pt") # 만들어진 모델 써서
 parser.add_argument('--test', default=False) # 테스트
 
 parser.add_argument('--split_directory', default=None)
@@ -84,6 +84,12 @@ if __name__ == '__main__':
             te=data_fold/data_0/dailydialog_test.json
             dl=-original_data_DailyDialog
         '''
+            
+        train_data_list = ['data_fold/data_0/test_datafile.json']
+        valid_data_list = ['data_fold/data_0/test_datafile.json']
+        test_data_list  = ['data_fold/data_0/test_datafile.json']
+        
+        
         args_dict['train_data'], args_dict['valid_data'], args_dict['test_data'], args_dict['data_label'] = tr, va, te, dl
         for mo, log_d in zip(model_name_list, log_directory_list):
             '''
@@ -93,8 +99,9 @@ if __name__ == '__main__':
             args_dict['model_name'] = mo
             args_dict['log_directory'] = log_d + dl
             
-            trainer = module.learning_env(**args_dict)
-            trainer.run(**args_dict)
+            trainer = module.trainer()
+            trainer.learning_env(**args_dict)
+            trainer.run(**args_dict) # 여기가 문제
             
             del trainer
     
