@@ -134,7 +134,6 @@ class trainer:
                 
                 prediction = self.model(utterance_input_ids_batch, utterance_attention_mask_batch, utterance_token_type_ids_batch, speaker_batch)
                 emotion_prediction, binary_cause_prediction = prediction
-                breakpoint()
         
         
     def run(self, **kwargs):

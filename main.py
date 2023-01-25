@@ -26,7 +26,7 @@ parser.add_argument('--num_worker', default=6)
 parser.add_argument('--port', default=1234)
 
 parser.add_argument('--model_name', default='DFC_MoE')
-parser.add_argument('--pretrained_model', default="model/pretrained.pt") # 만들어진 모델 써서
+parser.add_argument('--pretrained_model', default=None) # 만들어진 모델 써서
 parser.add_argument('--test', default=False) # 테스트
 
 parser.add_argument('--split_directory', default=None)
@@ -50,7 +50,7 @@ parser.add_argument('--contain_context', help='While tokenizing, previous uttera
 
 # Hyperparameters
 parser.add_argument('--training_iter', default=40)
-parser.add_argument('--batch_size', default=5)
+parser.add_argument('--batch_size', default=2) # originally, 5
 parser.add_argument('--learning_rate', default=5e-5)
 parser.add_argument('--patience', help='patience for Early Stopping', default=None)
 
